@@ -1,4 +1,4 @@
-const url = ''; // url of the api which contains students details 
+const url = 'https://raw.githubusercontent.com/Kolass2004/Student-Billing-system/main/students.json'; // url of the api which contains students details 
         let totalAmount = 0; 
 
         
