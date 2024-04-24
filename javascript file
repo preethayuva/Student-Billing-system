@@ -1,0 +1,128 @@
+const url = 'https://raw.githubusercontent.com/Kolass2004/Student-Billing-system/main/students.json';
+let totalAmount = 0;
+let data;
+let storedStudents = [];
+
+// Function to update total amount
+function updateTotalAmount() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const amountInput = document.getElementById("amountInput");
+    totalAmount = 0; // Reset totalAmount
+    let checkedStudentsCount = 0;
+
+    const amount = parseInt(amountInput.value);
+
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            totalAmount += amount;
+            checkedStudentsCount++;
+        }
+    });
+
+    document.getElementById("collectedAmount").textContent = totalAmount;
+    document.getElementById("checkedStudentsCount").textContent = checkedStudentsCount;
+    document.getElementById("uncheckedStudentsCount").textContent = checkboxes.length - checkedStudentsCount;
+    document.getElementById("totAmount").textContent = totalAmount;
+}
+
+// Function to show unchecked students
+function showUncheckedStudents() {
+    if (storedStudents.length === 0) {
+        alert("No stored students available.");
+        return;
+    }
+    
+    const uncheckedStudents = storedStudents.filter(student => !student.checked);
+    const amountInput = document.getElementById("amountInput");
+    const amount = parseInt(amountInput.value);
+    const totalAmount = uncheckedStudents.length * amount;
+
+    let message = `\n\nREMAINING AMOUNT: ${totalAmount} ₹\n\nREMAINING STUDENTS:\n\n`;
+    uncheckedStudents.forEach(student => {
+        message += `${student.name}\n`;
+    });
+
+    alert(message);
+}
+
+// Function to check all checkboxes
+function checkAll() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    updateTotalAmount();
+}
+
+// Function to uncheck all checkboxes
+function uncheckAll() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    totalAmount = 0;
+    document.getElementById("collectedAmount").textContent = 0;
+}
+
+// Fetch data from URL
+fetch(url)
+    .then(res => res.json())
+    .then(responseData => {
+        data = responseData; // Assign the data once it's fetched
+
+        // Function to display student names with checkboxes in a table
+        function displayStudentNames() {
+            const studentList = document.getElementById("studentList");
+            data.forEach(student => {
+                const row = document.createElement("tr");
+                const nameCell = document.createElement("td");
+                const checkboxCell = document.createElement("td");
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = `student_${student.sNo}`;
+                checkbox.addEventListener("change", updateTotalAmount);
+                const label = document.createElement("label");
+                label.htmlFor = `student_${student.sNo}`;
+                label.appendChild(document.createTextNode(student.Name));
+                checkboxCell.appendChild(checkbox);
+                nameCell.appendChild(label);
+                row.appendChild(nameCell);
+                row.appendChild(checkboxCell);
+                studentList.appendChild(row);
+            });
+        }
+
+        // Call the function to display student names
+        displayStudentNames();
+    });
+
+// Retrieve stored students from local storage
+const storedStudentsString = localStorage.getItem('storedStudents');
+if (storedStudentsString) {
+    storedStudents = JSON.parse(storedStudentsString);
+}
+
+// Update storedStudents array when checkboxes change
+document.addEventListener('change', function (event) {
+    const target = event.target;
+    if (target.type === 'checkbox') {
+        const studentId = parseInt(target.id.split('_')[1]);
+        const studentIndex = storedStudents.findIndex(student => student.id === studentId);
+        if (studentIndex !== -1) {
+            storedStudents[studentIndex].checked = target.checked;
+            localStorage.setItem('storedStudents', JSON.stringify(storedStudents));
+        }
+    }
+});
+
+// Update storedStudents array on page load to reflect the initial state of checkboxes
+window.addEventListener('load', function () {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        const studentId = parseInt(checkbox.id.split('_')[1]);
+        const studentIndex = storedStudents.findIndex(student => student.id === studentId);
+        if (studentIndex !== -1) {
+            checkbox.checked = storedStudents[studentIndex].checked;
+        }
+    });
+});
